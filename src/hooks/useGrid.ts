@@ -1,12 +1,13 @@
 import { useCallback, useMemo, useState } from 'react';
-import type { ActiveTile, Grid } from '../types';
+import type { ActiveTile, Grid, PortalSettings } from '../types';
 import { createEmptyGrid, cloneGrid } from '../engine/grid-helpers';
 import { validate } from '../engine/validator';
 import { generate as generateGrid } from '../engine/generator';
+import { GLOBAL_RULES } from '../config/rules';
 
 const DEFAULT_SIZE = 7;
 
-export function useGrid() {
+export function useGrid(portalSettings: PortalSettings = GLOBAL_RULES.portalSettings) {
   const [grid, setGrid] = useState<Grid>(() => createEmptyGrid(DEFAULT_SIZE));
   const [error, setError] = useState<string | null>(null);
 
@@ -43,16 +44,16 @@ export function useGrid() {
   const generate = useCallback((players: number) => {
     setError(null);
     setGrid((g) => {
-      const result = generateGrid(g.length, players);
+      const result = generateGrid(g.length, players, portalSettings);
       if (!result) {
         setError('No valid setup found for these settings.');
         return g;
       }
       return result;
     });
-  }, []);
+  }, [portalSettings]);
 
-  const violations = useMemo(() => validate(grid), [grid]);
+  const violations = useMemo(() => validate(grid, portalSettings), [grid, portalSettings]);
 
   return { grid, violations, error, place, remove, clear, resize, generate };
 }
