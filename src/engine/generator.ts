@@ -31,12 +31,12 @@ function buildPlacementOrder(players: number): PlacementUnit[] {
   const mailboxVariants = getVariantAssignment('mailbox', players);
   for (const v of mailboxVariants) units.push({ type: 'mailbox', variant: v });
 
-  // Graves.
-  for (let i = 0; i < TILE_RULES.grave.count(players); i++) units.push({ type: 'grave' });
-
   // Teleporters (one of each shape).
   const tpVariants = TILE_RULES.teleporter.variants ?? ['square', 'triangle', 'circle'];
   for (const v of tpVariants) units.push({ type: 'teleporter', variant: v });
+
+  // Graves.
+  for (let i = 0; i < TILE_RULES.grave.count(players); i++) units.push({ type: 'grave' });
 
   // Fences last (accessibility depends on everything else).
   for (let i = 0; i < TILE_RULES.fence.count(players); i++) units.push({ type: 'fence' });
