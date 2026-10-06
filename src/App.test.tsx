@@ -31,4 +31,10 @@ describe('App', () => {
     render(<App />);
     expect(screen.getByText(/setup is valid/i)).toBeInTheDocument();
   });
+
+  it('renders portal-pizza adjacency checkbox checked by default', () => {
+    render(<App />);
+    const checkbox = screen.getByLabelText(/portals not adjacent to pizza/i) as HTMLInputElement;
+    expect(checkbox.checked).toBe(true);
+  });
 });

@@ -5,12 +5,14 @@ import { Board } from './components/Board';
 import { TilePalette } from './components/TilePalette';
 import { Controls } from './components/Controls';
 import { Violations } from './components/Violations';
+import { GLOBAL_RULES } from './config/rules';
 import './App.css';
 
 export default function App() {
   const [players, setPlayers] = useState(2);
   const [active, setActive] = useState<ActiveTile | null>(null);
-  const { grid, violations, error, place, remove, clear, resize, generate } = useGrid();
+  const [portalSettings, setPortalSettings] = useState(GLOBAL_RULES.portalSettings);
+  const { grid, violations, error, place, remove, clear, resize, generate } = useGrid(portalSettings);
 
   const handlePlace = (r: number, c: number) => {
     if (active) place(r, c, active);
@@ -30,10 +32,12 @@ export default function App() {
         <Controls
           players={players}
           size={grid.length}
+          portalSettings={portalSettings}
           onPlayersChange={setPlayers}
           onSizeChange={handleSizeChange}
           onGenerate={() => generate(players)}
           onClear={clear}
+          onPortalSettingsChange={setPortalSettings}
         />
       </header>
       <main className="app-main">
