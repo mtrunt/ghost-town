@@ -12,6 +12,7 @@ export default function App() {
   const [players, setPlayers] = useState(2);
   const [active, setActive] = useState<ActiveTile | null>(null);
   const [portalSettings, setPortalSettings] = useState(GLOBAL_RULES.portalSettings);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const { grid, violations, error, place, remove, clear, resize, generate } = useGrid(portalSettings);
 
   const handlePlace = (r: number, c: number) => {
@@ -28,20 +29,28 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Ghost Town Setup</h1>
-        <Controls
-          players={players}
-          size={grid.length}
-          portalSettings={portalSettings}
-          onPlayersChange={setPlayers}
-          onSizeChange={handleSizeChange}
-          onGenerate={() => generate(players)}
-          onClear={clear}
-          onPortalSettingsChange={setPortalSettings}
-        />
+        <div className="app-header-row">
+          <h1>Ghost Town Setup</h1>
+          <div className="app-header-actions">
+            <button type="button" className="action-btn" onClick={() => generate(players)}>Generate</button>
+            <button type="button" className="action-btn secondary" onClick={clear}>Clear</button>
+            <button type="button" className="controls-toggle" aria-label="toggle settings" onClick={() => setSettingsOpen((v) => !v)}>
+              {settingsOpen ? '✕' : '⚙'}
+            </button>
+          </div>
+        </div>
+        {settingsOpen && (
+          <Controls
+            players={players}
+            size={grid.length}
+            portalSettings={portalSettings}
+            onPlayersChange={setPlayers}
+            onSizeChange={handleSizeChange}
+            onPortalSettingsChange={setPortalSettings}
+          />
+        )}
       </header>
       <main className="app-main">
-        <TilePalette active={active} onSelect={setActive} />
         <Board
           grid={grid}
           violations={violations}
@@ -49,6 +58,7 @@ export default function App() {
           onPlace={handlePlace}
           onRemove={remove}
         />
+        <TilePalette active={active} onSelect={setActive} />
         <Violations violations={violations} error={error} />
       </main>
     </div>

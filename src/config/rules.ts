@@ -188,6 +188,6 @@ export const GLOBAL_RULES: GlobalRules = {
   portalSettings: {
     noPizzaAdjacent: true,
     pizzaAdjacencyMetric: 'chebyshev',
-    minDistance: null,
+    minDistance: 3,
   },
 };

@@ -23,7 +23,7 @@ export function validate(grid: Grid, settings: PortalSettings = GLOBAL_RULES.por
         violations.push({
           row: r,
           col: c,
-          message: `${rule.label} at (${r},${c}) violates placement rules`,
+          message: `${rule.label} at (${r + 1},${c + 1}) violates placement rules`,
         });
       }
     }

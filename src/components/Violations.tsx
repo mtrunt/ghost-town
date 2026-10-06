@@ -28,7 +28,7 @@ export function Violations({ violations, error }: Props) {
       <ul>
         {violations.map((v, i) => (
           <li key={i}>
-            {v.row >= 0 ? `(${v.row},${v.col}): ` : ''}
+            {v.row >= 0 ? `(${v.row + 1},${v.col + 1}): ` : ''}
             {v.message}
           </li>
         ))}

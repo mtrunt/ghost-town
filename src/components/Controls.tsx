@@ -6,8 +6,6 @@ interface Props {
   portalSettings: PortalSettings;
   onPlayersChange: (n: number) => void;
   onSizeChange: (n: number) => void;
-  onGenerate: () => void;
-  onClear: () => void;
   onPortalSettingsChange: (settings: PortalSettings) => void;
 }
 
@@ -17,8 +15,6 @@ export function Controls({
   portalSettings,
   onPlayersChange,
   onSizeChange,
-  onGenerate,
-  onClear,
   onPortalSettingsChange,
 }: Props) {
   return (
@@ -113,9 +109,6 @@ export function Controls({
           </select>
         </label>
       )}
-
-      <button type="button" onClick={onGenerate}>Generate</button>
-      <button type="button" onClick={onClear}>Clear</button>
     </div>
   );
 }
