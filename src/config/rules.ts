@@ -128,4 +128,9 @@ export const GLOBAL_RULES: GlobalRules = {
   movementDirections: '4',
   checkAccessibility: isAccessible,
   oneTilePerCell: true,
+  portalSettings: {
+    noPizzaAdjacent: true,
+    pizzaAdjacencyMetric: 'chebyshev',
+    minDistance: null,
+  },
 };
