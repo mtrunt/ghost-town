@@ -1,0 +1,88 @@
+import { describe, expect, it } from 'vitest';
+import { createEmptyGrid } from '../engine/grid-helpers';
+import { TILE_RULES, GLOBAL_RULES, getVariantAssignment } from './rules';
+
+describe('tile rule config', () => {
+  it('start tile cannot be on edge', () => {
+    const g = createEmptyGrid(7);
+    expect(TILE_RULES.start.canPlace(g, 0, 0)).toBe(false);
+    expect(TILE_RULES.start.canPlace(g, 6, 3)).toBe(false);
+    expect(TILE_RULES.start.canPlace(g, 3, 3)).toBe(true);
+  });
+
+  it('start tile requires 8 surrounding cells empty', () => {
+    const g = createEmptyGrid(7);
+    g[2][3] = { tile: 'grave' };
+    expect(TILE_RULES.start.canPlace(g, 3, 3)).toBe(false);
+  });
+
+  it('start count equals player count', () => {
+    expect(TILE_RULES.start.count(2)).toBe(2);
+    expect(TILE_RULES.start.count(4)).toBe(4);
+  });
+
+  it('pizza variantAssignment: 2 players distinct', () => {
+    expect(getVariantAssignment('pizza', 2)).toEqual(['pepper', 'cheese']);
+  });
+
+  it('pizza variantAssignment: 3 players distinct', () => {
+    expect(getVariantAssignment('pizza', 3)).toEqual(['pepper', 'cheese', 'pepperoni']);
+  });
+
+  it('pizza variantAssignment: 4 players only cheese + pepperoni', () => {
+    const v = getVariantAssignment('pizza', 4);
+    expect(v).toHaveLength(4);
+    expect(v.every((x) => x === 'cheese' || x === 'pepperoni')).toBe(true);
+  });
+
+  it('mailbox variantAssignment matches pizza', () => {
+    expect(getVariantAssignment('mailbox', 3)).toEqual(getVariantAssignment('pizza', 3));
+  });
+
+  it('mailbox cannot be adjacent to same pizza variant', () => {
+    const g = createEmptyGrid(7);
+    g[3][3] = { tile: 'pizza', variant: 'pepper' };
+    expect(TILE_RULES.mailbox.canPlace(g, 2, 2, 'pepper')).toBe(false);
+    expect(TILE_RULES.mailbox.canPlace(g, 0, 0, 'pepper')).toBe(true);
+  });
+
+  it('mailbox can be adjacent to different pizza variant', () => {
+    const g = createEmptyGrid(7);
+    g[3][3] = { tile: 'pizza', variant: 'pepper' };
+    expect(TILE_RULES.mailbox.canPlace(g, 2, 2, 'cheese')).toBe(true);
+  });
+
+  it('grave, fence, teleporter can place on empty non-edge-irrelevant cell', () => {
+    const g = createEmptyGrid(7);
+    expect(TILE_RULES.grave.canPlace(g, 3, 3)).toBe(true);
+    expect(TILE_RULES.fence.canPlace(g, 3, 3)).toBe(true);
+    expect(TILE_RULES.teleporter.canPlace(g, 3, 3, 'square')).toBe(true);
+  });
+
+  it('all tiles cannot place on occupied cell', () => {
+    const g = createEmptyGrid(7);
+    g[3][3] = { tile: 'grave' };
+    expect(TILE_RULES.start.canPlace(g, 3, 3)).toBe(false);
+    expect(TILE_RULES.grave.canPlace(g, 3, 3)).toBe(false);
+    expect(TILE_RULES.pizza.canPlace(g, 3, 3, 'pepper')).toBe(false);
+  });
+
+  it('global rules report size bounds', () => {
+    expect(GLOBAL_RULES.minSize).toBe(5);
+    expect(GLOBAL_RULES.maxSize).toBe(10);
+  });
+
+  it('teleporter variants are square, triangle, circle', () => {
+    expect(TILE_RULES.teleporter.variants).toEqual(['square', 'triangle', 'circle']);
+  });
+
+  it('pizza variants are pepper, cheese, pepperoni', () => {
+    expect(TILE_RULES.pizza.variants).toEqual(['pepper', 'cheese', 'pepperoni']);
+  });
+
+  it('grave count is 6, fence 4, teleporter 3', () => {
+    expect(TILE_RULES.grave.count(2)).toBe(6);
+    expect(TILE_RULES.fence.count(2)).toBe(4);
+    expect(TILE_RULES.teleporter.count(2)).toBe(3);
+  });
+});
