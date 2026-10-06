@@ -1,11 +1,11 @@
-import type { Grid, Violation } from '../types';
+import type { Grid, Violation, PortalSettings } from '../types';
 import { TILE_RULES, GLOBAL_RULES } from '../config/rules';
 
 /**
  * Validates an entire grid against all tile rules and global rules.
  * Returns a list of violations with coordinates and messages.
  */
-export function validate(grid: Grid): Violation[] {
+export function validate(grid: Grid, settings: PortalSettings = GLOBAL_RULES.portalSettings): Violation[] {
   const violations: Violation[] = [];
   const size = grid.length;
 
@@ -19,7 +19,7 @@ export function validate(grid: Grid): Violation[] {
         row.map((x, ci) => (ri === r && ci === c ? null : x)),
       );
       const rule = TILE_RULES[cell.tile];
-      if (!rule.canPlace(testGrid, r, c, cell.variant)) {
+      if (!rule.canPlace(testGrid, r, c, cell.variant, settings)) {
         violations.push({
           row: r,
           col: c,
