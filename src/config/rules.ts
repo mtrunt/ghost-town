@@ -1,5 +1,6 @@
 import type { Grid, TileRule, TileType, GlobalRules } from '../types';
 import { getNeighbors, isEdgeCell } from '../engine/grid-helpers';
+import { isAccessible } from '../engine/connectivity';
 
 const VARIANT_ASSIGNMENTS: Record<'pizza' | 'mailbox', (players: number) => string[]> = {
   pizza: (p) => {
@@ -115,6 +116,6 @@ export const GLOBAL_RULES: GlobalRules = {
   maxSize: 10,
   startExclusionRadius: 1,
   movementDirections: '4',
-  checkAccessibility: () => true, // wired in Task 6 after import resolved
+  checkAccessibility: isAccessible,
   oneTilePerCell: true,
 };

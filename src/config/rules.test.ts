@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createEmptyGrid } from '../engine/grid-helpers';
+import { isAccessible } from '../engine/connectivity';
 import { TILE_RULES, GLOBAL_RULES, getVariantAssignment } from './rules';
 
 describe('tile rule config', () => {
@@ -84,5 +85,12 @@ describe('tile rule config', () => {
     expect(TILE_RULES.grave.count(2)).toBe(6);
     expect(TILE_RULES.fence.count(2)).toBe(4);
     expect(TILE_RULES.teleporter.count(2)).toBe(3);
+  });
+
+  it('GLOBAL_RULES.checkAccessibility matches isAccessible', () => {
+    const g = createEmptyGrid(5);
+    for (let r = 0; r < 5; r++) g[r][2] = { tile: 'fence' };
+    expect(GLOBAL_RULES.checkAccessibility(g)).toBe(isAccessible(g));
+    expect(GLOBAL_RULES.checkAccessibility(g)).toBe(false);
   });
 });
