@@ -1,4 +1,4 @@
-import type { Grid, TileRule, TileType, GlobalRules } from '../types';
+import type { Grid, TileRule, TileType, GlobalRules, PortalSettings } from '../types';
 import { getNeighbors, isEdgeCell } from '../engine/grid-helpers';
 import { isAccessible } from '../engine/connectivity';
 
@@ -60,6 +60,24 @@ function mailboxCanPlace(grid: Grid, r: number, c: number, variant?: string): bo
 /** Generic: just empty cell. */
 function genericCanPlace(grid: Grid, r: number, c: number): boolean {
   return isEmpty(grid, r, c);
+}
+
+/** Teleporter: empty cell + optional portal settings (pizza adjacency, min distance). */
+function teleporterCanPlace(
+  grid: Grid,
+  r: number,
+  c: number,
+  _variant?: string,
+  settings?: PortalSettings,
+): boolean {
+  if (!isEmpty(grid, r, c)) return false;
+  if (settings?.noPizzaAdjacent) {
+    if (isAdjacentToPizza(grid, r, c, settings.pizzaAdjacencyMetric)) return false;
+  }
+  if (settings?.minDistance != null && settings.minDistance > 0) {
+    if (!respectsMinDistance(grid, r, c, settings.minDistance)) return false;
+  }
+  return true;
 }
 
 /** Chebyshev distance between two cells. */
@@ -156,7 +174,7 @@ export const TILE_RULES: Record<TileType, TileRule> = {
     variants: ['square', 'triangle', 'circle'],
     count: () => 3,
     variantAssignment: () => ['square', 'triangle', 'circle'],
-    canPlace: genericCanPlace,
+    canPlace: teleporterCanPlace,
   },
 };
 

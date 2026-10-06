@@ -146,3 +146,77 @@ describe('portal helpers', () => {
     expect(respectsMinDistance(g, 3, 3, 1)).toBe(true);
   });
 });
+
+describe('teleporter canPlace with settings', () => {
+  it('noPizzaAdjacent chebyshev: blocks 8-dir adjacency', () => {
+    const g = createEmptyGrid(7);
+    g[3][3] = { tile: 'pizza', variant: 'pepper' };
+    const settings = { noPizzaAdjacent: true, pizzaAdjacencyMetric: 'chebyshev' as const, minDistance: null };
+    expect(TILE_RULES.teleporter.canPlace(g, 2, 2, 'square', settings)).toBe(false); // diagonal
+    expect(TILE_RULES.teleporter.canPlace(g, 2, 3, 'square', settings)).toBe(false); // up
+    expect(TILE_RULES.teleporter.canPlace(g, 0, 0, 'square', settings)).toBe(true);
+  });
+
+  it('noPizzaAdjacent manhattan: blocks only 4-dir adjacency', () => {
+    const g = createEmptyGrid(7);
+    g[3][3] = { tile: 'pizza', variant: 'pepper' };
+    const settings = { noPizzaAdjacent: true, pizzaAdjacencyMetric: 'manhattan' as const, minDistance: null };
+    expect(TILE_RULES.teleporter.canPlace(g, 2, 3, 'square', settings)).toBe(false); // up
+    expect(TILE_RULES.teleporter.canPlace(g, 2, 2, 'square', settings)).toBe(true);  // diagonal allowed
+  });
+
+  it('noPizzaAdjacent false: adjacent pizza allowed (current behavior)', () => {
+    const g = createEmptyGrid(7);
+    g[3][3] = { tile: 'pizza', variant: 'pepper' };
+    const settings = { noPizzaAdjacent: false, pizzaAdjacencyMetric: 'chebyshev' as const, minDistance: null };
+    expect(TILE_RULES.teleporter.canPlace(g, 2, 2, 'square', settings)).toBe(true);
+  });
+
+  it('no settings: adjacent pizza allowed (backward compat)', () => {
+    const g = createEmptyGrid(7);
+    g[3][3] = { tile: 'pizza', variant: 'pepper' };
+    expect(TILE_RULES.teleporter.canPlace(g, 2, 2, 'square')).toBe(true);
+  });
+
+  it('minDistance 2: blocks teleporter at chebyshev 1', () => {
+    const g = createEmptyGrid(7);
+    g[3][3] = { tile: 'teleporter', variant: 'square' };
+    const settings = { noPizzaAdjacent: false, pizzaAdjacencyMetric: 'chebyshev' as const, minDistance: 2 };
+    expect(TILE_RULES.teleporter.canPlace(g, 4, 4, 'triangle', settings)).toBe(false); // chebyshev 1
+    expect(TILE_RULES.teleporter.canPlace(g, 5, 5, 'triangle', settings)).toBe(true);  // chebyshev 2
+  });
+
+  it('minDistance 3: blocks teleporter at chebyshev 2', () => {
+    const g = createEmptyGrid(7);
+    g[3][3] = { tile: 'teleporter', variant: 'square' };
+    const settings = { noPizzaAdjacent: false, pizzaAdjacencyMetric: 'chebyshev' as const, minDistance: 3 };
+    expect(TILE_RULES.teleporter.canPlace(g, 5, 3, 'triangle', settings)).toBe(false); // chebyshev 2
+    expect(TILE_RULES.teleporter.canPlace(g, 6, 3, 'triangle', settings)).toBe(true);  // chebyshev 3
+  });
+
+  it('minDistance null: no distance constraint', () => {
+    const g = createEmptyGrid(7);
+    g[3][3] = { tile: 'teleporter', variant: 'square' };
+    const settings = { noPizzaAdjacent: false, pizzaAdjacencyMetric: 'chebyshev' as const, minDistance: null };
+    expect(TILE_RULES.teleporter.canPlace(g, 4, 4, 'triangle', settings)).toBe(true);
+  });
+
+  it('both rules can combine: pizza-adjacent AND too-close teleporter both fail', () => {
+    const g = createEmptyGrid(7);
+    g[3][3] = { tile: 'pizza', variant: 'pepper' };
+    g[2][2] = { tile: 'teleporter', variant: 'square' };
+    const settings = { noPizzaAdjacent: true, pizzaAdjacencyMetric: 'chebyshev' as const, minDistance: 3 };
+    // (2,3) is adjacent to pizza at (3,3) AND chebyshev-1 from teleporter at (2,2)
+    expect(TILE_RULES.teleporter.canPlace(g, 2, 3, 'triangle', settings)).toBe(false);
+  });
+
+  it('non-teleporter rules ignore the settings param', () => {
+    const g = createEmptyGrid(7);
+    g[3][3] = { tile: 'pizza', variant: 'pepper' };
+    const settings = { noPizzaAdjacent: true, pizzaAdjacencyMetric: 'chebyshev' as const, minDistance: 2 };
+    // grave, fence, pizza canPlace should be unaffected by settings
+    expect(TILE_RULES.grave.canPlace(g, 0, 0, undefined, settings)).toBe(true);
+    expect(TILE_RULES.fence.canPlace(g, 0, 0, undefined, settings)).toBe(true);
+    expect(TILE_RULES.pizza.canPlace(g, 0, 0, 'pepper', settings)).toBe(true);
+  });
+});
