@@ -19,6 +19,15 @@ export interface Violation {
   message: string;
 }
 
+export interface PortalSettings {
+  /** When true, teleporters may not be placed adjacent to pizza boxes. */
+  noPizzaAdjacent: boolean;
+  /** Adjacency metric for noPizzaAdjacent. 'chebyshev' = 8-dir, 'manhattan' = 4-dir. */
+  pizzaAdjacencyMetric: 'chebyshev' | 'manhattan';
+  /** When non-null, teleporters must be at least this many cells apart (Chebyshev). */
+  minDistance: number | null;
+}
+
 export interface TileRule {
   type: TileType;
   label: string;
@@ -29,7 +38,13 @@ export interface TileRule {
   variants?: string[];
   count: (players: number) => number;
   variantAssignment?: (players: number) => string[];
-  canPlace: (grid: Grid, r: number, c: number, variant?: string) => boolean;
+  canPlace: (
+    grid: Grid,
+    r: number,
+    c: number,
+    variant?: string,
+    settings?: PortalSettings,
+  ) => boolean;
 }
 
 export interface GlobalRules {
@@ -39,6 +54,7 @@ export interface GlobalRules {
   movementDirections: '4' | '8';
   checkAccessibility: (grid: Grid) => boolean;
   oneTilePerCell: boolean;
+  portalSettings: PortalSettings;
 }
 
 export interface ActiveTile {
