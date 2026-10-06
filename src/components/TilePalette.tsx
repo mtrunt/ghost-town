@@ -41,6 +41,7 @@ export function TilePalette({ active, onSelect }: Props) {
                     key={v}
                     type="button"
                     className={`palette-variant${active?.type === type && active.variant === v ? ' active' : ''}`}
+                    style={rule.variantColors?.[v] ? { background: rule.variantColors[v], color: '#0f172a' } : undefined}
                     onClick={() => onSelect({ type, variant: v })}
                   >
                     {v}

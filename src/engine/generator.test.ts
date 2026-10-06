@@ -27,6 +27,16 @@ describe('generator', () => {
     expect(validate(g!)).toEqual([]);
   });
 
+  // Regression: the default board size is 7, and the naive backtracker would
+  // hang on 7x7/4p because most random start-tile arrangements are infeasible
+  // and the search spent exponential time proving it. The generator must
+  // either find a valid board or return null within a reasonable time budget.
+  it('generates a valid 7x7 setup for 4 players without hanging', () => {
+    const g = generate(7, 4);
+    expect(g).not.toBeNull();
+    expect(validate(g!)).toEqual([]);
+  });
+
   it('respects tile counts', () => {
     const g = generate(7, 2)!;
     const counts: Record<string, number> = {};

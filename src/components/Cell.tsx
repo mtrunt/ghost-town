@@ -12,8 +12,11 @@ interface Props {
 }
 
 export function CellView({ row, col, cell, violating, onPlace, onRemove }: Props) {
-  const icon = cell ? TILE_RULES[cell.tile].icon : '';
-  const color = cell ? TILE_RULES[cell.tile].color : 'transparent';
+  const rule = cell ? TILE_RULES[cell.tile] : null;
+  const icon = rule ? rule.icon : '';
+  const color = rule
+    ? (cell!.variant && rule.variantColors?.[cell!.variant]) ?? rule.color
+    : 'transparent';
 
   return (
     <button

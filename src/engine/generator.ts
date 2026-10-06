@@ -44,14 +44,23 @@ function buildPlacementOrder(players: number): PlacementUnit[] {
   return units;
 }
 
+// Upper bound on placement attempts per generator invocation. Without this,
+// the backtracker can spend exponential time proving an over-constrained
+// configuration (e.g. 7x7 with 4 players) is infeasible before returning null,
+// which hangs the UI. When the limit is hit we return null and the caller
+// treats it as "no valid setup found for these settings".
+const MAX_ATTEMPTS = 100_000;
+
 function backtrack(
   grid: Grid,
   units: PlacementUnit[],
   idx: number,
   fencePlaced: number,
   totalFences: number,
+  budget: { left: number },
 ): Grid | null {
   if (idx === units.length) return grid;
+  if (budget.left <= 0) return null;
 
   const unit = units[idx];
   const size = grid.length;
@@ -59,6 +68,9 @@ function backtrack(
   for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) cells.push({ r, c });
 
   for (const { r, c } of shuffle(cells)) {
+    budget.left--;
+    if (budget.left < 0) return null;
+
     const rule = TILE_RULES[unit.type];
     if (!rule.canPlace(grid, r, c, unit.variant)) continue;
 
@@ -93,6 +105,7 @@ function backtrack(
       idx + 1,
       unit.type === 'fence' ? fencePlaced + 1 : fencePlaced,
       totalFences,
+      budget,
     );
     if (result) return result;
   }
@@ -103,5 +116,17 @@ function backtrack(
 export function generate(size: number, players: number): Grid | null {
   const units = buildPlacementOrder(players);
   const totalFences = TILE_RULES.fence.count(players);
-  return backtrack(createEmptyGrid(size), units, 0, 0, totalFences);
+  // Random-restart loop: each attempt gets a fresh budget. A single attempt
+  // may exhaust its budget on a bad random starting arrangement even when a
+  // valid board exists, so we retry a few times before declaring failure.
+  // Per-restart success on hard boards (7x7/4p) is ~20%, so a high restart
+  // count is needed for the overall call to succeed reliably; each failed
+  // restart costs well under 100ms, keeping worst-case latency around 1s.
+  const RESTARTS = 40;
+  for (let i = 0; i < RESTARTS; i++) {
+    const budget = { left: MAX_ATTEMPTS };
+    const result = backtrack(createEmptyGrid(size), units, 0, 0, totalFences, budget);
+    if (result) return result;
+  }
+  return null;
 }

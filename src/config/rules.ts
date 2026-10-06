@@ -2,6 +2,14 @@ import type { Grid, TileRule, TileType, GlobalRules } from '../types';
 import { getNeighbors, isEdgeCell } from '../engine/grid-helpers';
 import { isAccessible } from '../engine/connectivity';
 
+/** Variant colors shared between pizza and mailbox so each pair is visually matched.
+ *  pepper = green, cheese = yellow, pepperoni = red. */
+const VARIANT_COLORS: Record<string, string> = {
+  pepper: '#22c55e',
+  cheese: '#eab308',
+  pepperoni: '#ef4444',
+};
+
 const VARIANT_ASSIGNMENTS: Record<'pizza' | 'mailbox', (players: number) => string[]> = {
   pizza: (p) => {
     if (p === 2) return ['pepper', 'cheese'];
@@ -68,6 +76,7 @@ export const TILE_RULES: Record<TileType, TileRule> = {
     label: 'Pizza Box',
     icon: '🍕',
     color: '#f97316',
+    variantColors: VARIANT_COLORS,
     variants: ['pepper', 'cheese', 'pepperoni'],
     count: (p) => p,
     variantAssignment: (p) => getVariantAssignment('pizza', p),
@@ -78,6 +87,7 @@ export const TILE_RULES: Record<TileType, TileRule> = {
     label: 'Mailbox',
     icon: '📬',
     color: '#3b82f6',
+    variantColors: VARIANT_COLORS,
     variants: ['pepper', 'cheese', 'pepperoni'],
     count: (p) => p,
     variantAssignment: (p) => getVariantAssignment('mailbox', p),

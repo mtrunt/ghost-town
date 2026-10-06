@@ -24,6 +24,8 @@ export interface TileRule {
   label: string;
   icon: string;
   color: string;
+  /** Per-variant background colors. When present, used instead of `color` for cells with a variant. */
+  variantColors?: Record<string, string>;
   variants?: string[];
   count: (players: number) => number;
   variantAssignment?: (players: number) => string[];
