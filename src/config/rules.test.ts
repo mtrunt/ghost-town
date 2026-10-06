@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createEmptyGrid } from '../engine/grid-helpers';
 import { isAccessible } from '../engine/connectivity';
-import { TILE_RULES, GLOBAL_RULES, getVariantAssignment } from './rules';
+import { TILE_RULES, GLOBAL_RULES, getVariantAssignment, chebyshev, isAdjacentToPizza, respectsMinDistance } from './rules';
 
 describe('tile rule config', () => {
   it('start tile cannot be on edge', () => {
@@ -92,5 +92,57 @@ describe('tile rule config', () => {
     for (let r = 0; r < 5; r++) g[r][2] = { tile: 'fence' };
     expect(GLOBAL_RULES.checkAccessibility(g)).toBe(isAccessible(g));
     expect(GLOBAL_RULES.checkAccessibility(g)).toBe(false);
+  });
+});
+
+describe('portal helpers', () => {
+  it('chebyshev distance', () => {
+    expect(chebyshev(0, 0, 0, 0)).toBe(0);
+    expect(chebyshev(0, 0, 1, 1)).toBe(1);
+    expect(chebyshev(0, 0, 2, 1)).toBe(2);
+    expect(chebyshev(1, 1, 4, 3)).toBe(3);
+  });
+
+  it('isAdjacentToPizza chebyshev detects 8-dir neighbors', () => {
+    const g = createEmptyGrid(7);
+    g[3][3] = { tile: 'pizza', variant: 'pepper' };
+    expect(isAdjacentToPizza(g, 2, 2, 'chebyshev')).toBe(true); // diagonal
+    expect(isAdjacentToPizza(g, 2, 3, 'chebyshev')).toBe(true); // up
+    expect(isAdjacentToPizza(g, 4, 4, 'chebyshev')).toBe(true); // diagonal
+    expect(isAdjacentToPizza(g, 0, 0, 'chebyshev')).toBe(false);
+  });
+
+  it('isAdjacentToPizza manhattan only detects 4-dir neighbors', () => {
+    const g = createEmptyGrid(7);
+    g[3][3] = { tile: 'pizza', variant: 'pepper' };
+    expect(isAdjacentToPizza(g, 2, 3, 'manhattan')).toBe(true); // up
+    expect(isAdjacentToPizza(g, 3, 4, 'manhattan')).toBe(true); // right
+    expect(isAdjacentToPizza(g, 2, 2, 'manhattan')).toBe(false); // diagonal
+    expect(isAdjacentToPizza(g, 4, 4, 'manhattan')).toBe(false); // diagonal
+  });
+
+  it('respectsMinDistance true when far enough', () => {
+    const g = createEmptyGrid(7);
+    g[0][0] = { tile: 'teleporter', variant: 'square' };
+    expect(respectsMinDistance(g, 3, 3, 2)).toBe(true); // chebyshev 3
+  });
+
+  it('respectsMinDistance false when too close', () => {
+    const g = createEmptyGrid(7);
+    g[0][0] = { tile: 'teleporter', variant: 'square' };
+    expect(respectsMinDistance(g, 1, 1, 2)).toBe(false); // chebyshev 1
+  });
+
+  it('respectsMinDistance boundary: distance equals min is allowed', () => {
+    const g = createEmptyGrid(7);
+    g[0][0] = { tile: 'teleporter', variant: 'square' };
+    expect(respectsMinDistance(g, 2, 0, 2)).toBe(true); // chebyshev 2, not < 2
+  });
+
+  it('respectsMinDistance ignores the candidate cell itself', () => {
+    const g = createEmptyGrid(7);
+    g[3][3] = { tile: 'teleporter', variant: 'square' };
+    // Calling with (3,3) should not compare against itself.
+    expect(respectsMinDistance(g, 3, 3, 1)).toBe(true);
   });
 });
