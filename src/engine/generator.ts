@@ -1,7 +1,7 @@
-import type { Grid, Cell, TileType } from '../types';
+import type { Grid, Cell, TileType, PortalSettings } from '../types';
 import { createEmptyGrid, cloneGrid, getNeighbors } from './grid-helpers';
 import { isAccessible } from './connectivity';
-import { TILE_RULES, getVariantAssignment } from '../config/rules';
+import { TILE_RULES, getVariantAssignment, GLOBAL_RULES } from '../config/rules';
 
 interface PlacementUnit {
   type: TileType;
@@ -58,6 +58,7 @@ function backtrack(
   fencePlaced: number,
   totalFences: number,
   budget: { left: number },
+  settings: PortalSettings,
 ): Grid | null {
   if (idx === units.length) return grid;
   if (budget.left <= 0) return null;
@@ -72,7 +73,7 @@ function backtrack(
     if (budget.left < 0) return null;
 
     const rule = TILE_RULES[unit.type];
-    if (!rule.canPlace(grid, r, c, unit.variant)) continue;
+    if (!rule.canPlace(grid, r, c, unit.variant, settings)) continue;
 
     const next = cloneGrid(grid);
     next[r][c] = { tile: unit.type, variant: unit.variant } as Cell;
@@ -88,7 +89,7 @@ function backtrack(
       const testGrid = next.map((row, ri) =>
         row.map((x, ci) => (ri === nr && ci === nc ? null : x)),
       );
-      if (!nRule.canPlace(testGrid, nr, nc, cell.variant)) {
+      if (!nRule.canPlace(testGrid, nr, nc, cell.variant, settings)) {
         neighborOk = false;
         break;
       }
@@ -106,6 +107,7 @@ function backtrack(
       unit.type === 'fence' ? fencePlaced + 1 : fencePlaced,
       totalFences,
       budget,
+      settings,
     );
     if (result) return result;
   }
@@ -113,7 +115,11 @@ function backtrack(
   return null;
 }
 
-export function generate(size: number, players: number): Grid | null {
+export function generate(
+  size: number,
+  players: number,
+  settings: PortalSettings = GLOBAL_RULES.portalSettings,
+): Grid | null {
   const units = buildPlacementOrder(players);
   const totalFences = TILE_RULES.fence.count(players);
   // Random-restart loop: each attempt gets a fresh budget. A single attempt
@@ -125,7 +131,7 @@ export function generate(size: number, players: number): Grid | null {
   const RESTARTS = 40;
   for (let i = 0; i < RESTARTS; i++) {
     const budget = { left: MAX_ATTEMPTS };
-    const result = backtrack(createEmptyGrid(size), units, 0, 0, totalFences, budget);
+    const result = backtrack(createEmptyGrid(size), units, 0, 0, totalFences, budget, settings);
     if (result) return result;
   }
   return null;
