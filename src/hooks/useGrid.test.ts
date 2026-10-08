@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useGrid } from './useGrid';
 import { GLOBAL_RULES } from '../config/rules';
-import { encodeShareCode, decodeShareCode } from '../engine/share-code';
 
 describe('useGrid with portal settings', () => {
   it('accepts portalSettings and flags adjacent teleporter+pizza when on', () => {
