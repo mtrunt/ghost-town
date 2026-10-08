@@ -3,15 +3,17 @@ import { createEmptyGrid, cloneGrid, getNeighbors } from './grid-helpers';
 import { isAccessible } from './connectivity';
 import { TILE_RULES, getVariantAssignment, GLOBAL_RULES } from '../config/rules';
 
+import { mulberry32 } from './prng';
+
 interface PlacementUnit {
   type: TileType;
   variant?: string;
 }
 
-function shuffle<T>(arr: T[]): T[] {
+function shuffle<T>(arr: T[], rng: () => number = Math.random): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rng() * (i + 1));
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
@@ -59,6 +61,7 @@ function backtrack(
   totalFences: number,
   budget: { left: number },
   settings: PortalSettings,
+  rng: () => number,
 ): Grid | null {
   if (idx === units.length) return grid;
   if (budget.left <= 0) return null;
@@ -68,7 +71,7 @@ function backtrack(
   const cells: Array<{ r: number; c: number }> = [];
   for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) cells.push({ r, c });
 
-  for (const { r, c } of shuffle(cells)) {
+  for (const { r, c } of shuffle(cells, rng)) {
     budget.left--;
     if (budget.left < 0) return null;
 
@@ -108,6 +111,7 @@ function backtrack(
       totalFences,
       budget,
       settings,
+      rng,
     );
     if (result) return result;
   }
@@ -119,7 +123,10 @@ export function generate(
   size: number,
   players: number,
   settings: PortalSettings = GLOBAL_RULES.portalSettings,
-): Grid | null {
+  seed?: number,
+): { grid: Grid | null; seed: number } {
+  const actualSeed = seed ?? Math.floor(Math.random() * 0x800000);
+  const rng = mulberry32(actualSeed);
   const units = buildPlacementOrder(players);
   const totalFences = TILE_RULES.fence.count(players);
   // Random-restart loop: each attempt gets a fresh budget. A single attempt
@@ -131,8 +138,8 @@ export function generate(
   const RESTARTS = 40;
   for (let i = 0; i < RESTARTS; i++) {
     const budget = { left: MAX_ATTEMPTS };
-    const result = backtrack(createEmptyGrid(size), units, 0, 0, totalFences, budget, settings);
-    if (result) return result;
+    const result = backtrack(createEmptyGrid(size), units, 0, 0, totalFences, budget, settings, rng);
+    if (result) return { grid: result, seed: actualSeed };
   }
-  return null;
+  return { grid: null, seed: actualSeed };
 }
