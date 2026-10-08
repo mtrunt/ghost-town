@@ -6,7 +6,9 @@ import type { PortalSettings } from '../types';
 const DEFAULT_PORTAL_SETTINGS: PortalSettings = {
   noPizzaAdjacent: true,
   pizzaAdjacencyMetric: 'chebyshev',
+  noMailboxAdjacent: true,
   minDistance: 3,
+  mailboxMinDistance: true,
 };
 
 describe('Controls', () => {
@@ -181,7 +183,7 @@ describe('Controls portal settings', () => {
         players={2} size={7}
         portalSettings={settings}
         onPlayersChange={vi.fn()} onSizeChange={vi.fn()}
-       
+        
         onPortalSettingsChange={onPortalSettingsChange}
       />,
     );
@@ -189,6 +191,72 @@ describe('Controls portal settings', () => {
     expect(onPortalSettingsChange).toHaveBeenCalledWith({
       ...settings,
       minDistance: 4,
+    });
+  });
+
+  it('renders the portals-not-adjacent-to-houses checkbox checked by default', () => {
+    render(
+      <Controls
+        players={2} size={7}
+        portalSettings={DEFAULT_PORTAL_SETTINGS}
+        onPlayersChange={vi.fn()} onSizeChange={vi.fn()}
+        
+        onPortalSettingsChange={vi.fn()}
+      />,
+    );
+    const checkbox = screen.getByLabelText(/portals not adjacent to houses/i) as HTMLInputElement;
+    expect(checkbox.checked).toBe(true);
+  });
+
+  it('toggling houses-adjacency checkbox calls onPortalSettingsChange', () => {
+    const onPortalSettingsChange = vi.fn();
+    render(
+      <Controls
+        players={2} size={7}
+        portalSettings={DEFAULT_PORTAL_SETTINGS}
+        onPlayersChange={vi.fn()} onSizeChange={vi.fn()}
+        
+        onPortalSettingsChange={onPortalSettingsChange}
+      />,
+    );
+    const checkbox = screen.getByLabelText(/portals not adjacent to houses/i);
+    fireEvent.click(checkbox);
+    expect(onPortalSettingsChange).toHaveBeenCalledWith({
+      ...DEFAULT_PORTAL_SETTINGS,
+      noMailboxAdjacent: false,
+    });
+  });
+
+  it('renders the mailbox-min-distance checkbox checked by default', () => {
+    render(
+      <Controls
+        players={2} size={7}
+        portalSettings={DEFAULT_PORTAL_SETTINGS}
+        onPlayersChange={vi.fn()} onSizeChange={vi.fn()}
+        
+        onPortalSettingsChange={vi.fn()}
+      />,
+    );
+    const checkbox = screen.getByLabelText(/mailbox min distance from matching pizza/i) as HTMLInputElement;
+    expect(checkbox.checked).toBe(true);
+  });
+
+  it('toggling mailbox-min-distance checkbox calls onPortalSettingsChange', () => {
+    const onPortalSettingsChange = vi.fn();
+    render(
+      <Controls
+        players={2} size={7}
+        portalSettings={DEFAULT_PORTAL_SETTINGS}
+        onPlayersChange={vi.fn()} onSizeChange={vi.fn()}
+        
+        onPortalSettingsChange={onPortalSettingsChange}
+      />,
+    );
+    const checkbox = screen.getByLabelText(/mailbox min distance from matching pizza/i);
+    fireEvent.click(checkbox);
+    expect(onPortalSettingsChange).toHaveBeenCalledWith({
+      ...DEFAULT_PORTAL_SETTINGS,
+      mailboxMinDistance: false,
     });
   });
 });

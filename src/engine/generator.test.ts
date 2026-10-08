@@ -73,14 +73,28 @@ describe('generator with portal settings', () => {
   });
 
   it('generated board respects minDistance 3', () => {
-    const settings = { noPizzaAdjacent: false, pizzaAdjacencyMetric: 'chebyshev' as const, minDistance: 3 };
+    const settings = { noPizzaAdjacent: false, pizzaAdjacencyMetric: 'chebyshev' as const, noMailboxAdjacent: false, minDistance: 3 };
     const g = generate(7, 2, settings)!;
     expect(g).not.toBeNull();
     expect(validate(g, settings)).toEqual([]);
   });
 
   it('generated board under relaxed settings is valid', () => {
-    const settings = { noPizzaAdjacent: false, pizzaAdjacencyMetric: 'chebyshev' as const, minDistance: null };
+    const settings = { noPizzaAdjacent: false, pizzaAdjacencyMetric: 'chebyshev' as const, noMailboxAdjacent: false, minDistance: null };
+    const g = generate(7, 2, settings)!;
+    expect(g).not.toBeNull();
+    expect(validate(g, settings)).toEqual([]);
+  });
+
+  it('generated board has no teleporter adjacent to mailbox under noMailboxAdjacent', () => {
+    const settings = { noPizzaAdjacent: false, pizzaAdjacencyMetric: 'chebyshev' as const, noMailboxAdjacent: true, minDistance: null };
+    const g = generate(7, 2, settings)!;
+    expect(g).not.toBeNull();
+    expect(validate(g, settings)).toEqual([]);
+  });
+
+  it('generated board respects mailboxMinDistance from same-variant pizza', () => {
+    const settings = { noPizzaAdjacent: false, pizzaAdjacencyMetric: 'chebyshev' as const, noMailboxAdjacent: false, minDistance: 3, mailboxMinDistance: true };
     const g = generate(7, 2, settings)!;
     expect(g).not.toBeNull();
     expect(validate(g, settings)).toEqual([]);

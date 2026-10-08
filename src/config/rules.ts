@@ -31,11 +31,11 @@ function isEmpty(grid: Grid, r: number, c: number): boolean {
   return grid[r][c] === null;
 }
 
-/** Start tile: not on edge, 8 surrounding cells empty. */
+/** Start tile: not on edge, 4 orthogonally adjacent cells empty. */
 function startCanPlace(grid: Grid, r: number, c: number): boolean {
   if (!isEmpty(grid, r, c)) return false;
   if (isEdgeCell(grid, r, c)) return false;
-  for (const { r: nr, c: nc } of getNeighbors(grid, r, c, 8)) {
+  for (const { r: nr, c: nc } of getNeighbors(grid, r, c, 4)) {
     if (!isEmpty(grid, nr, nc)) return false;
   }
   return true;
@@ -46,13 +46,25 @@ function pizzaCanPlace(grid: Grid, r: number, c: number): boolean {
   return isEmpty(grid, r, c);
 }
 
-/** Mailbox: not adjacent (8-dir) to a pizza box of the same variant. */
-function mailboxCanPlace(grid: Grid, r: number, c: number, variant?: string): boolean {
+/** Mailbox: not adjacent (8-dir) to a pizza box of the same variant, nor to another mailbox of the same variant.
+ *  When settings.mailboxMinDistance is on and minDistance is set, the mailbox
+ *  must also be at least `minDistance` (Chebyshev) from any same-variant pizza. */
+function mailboxCanPlace(
+  grid: Grid,
+  r: number,
+  c: number,
+  variant?: string,
+  settings?: PortalSettings,
+): boolean {
   if (!isEmpty(grid, r, c)) return false;
   if (!variant) return false;
   for (const { r: nr, c: nc } of getNeighbors(grid, r, c, 8)) {
     const cell = grid[nr][nc];
     if (cell?.tile === 'pizza' && cell.variant === variant) return false;
+    if (cell?.tile === 'mailbox' && cell.variant === variant) return false;
+  }
+  if (settings?.mailboxMinDistance && settings.minDistance != null && settings.minDistance > 0) {
+    if (!respectsMailboxPizzaDistance(grid, r, c, variant, settings.minDistance)) return false;
   }
   return true;
 }
@@ -74,6 +86,9 @@ function teleporterCanPlace(
   if (settings?.noPizzaAdjacent) {
     if (isAdjacentToPizza(grid, r, c, settings.pizzaAdjacencyMetric)) return false;
   }
+  if (settings?.noMailboxAdjacent) {
+    if (isAdjacentToTile(grid, r, c, 'mailbox', settings.pizzaAdjacencyMetric)) return false;
+  }
   if (settings?.minDistance != null && settings.minDistance > 0) {
     if (!respectsMinDistance(grid, r, c, settings.minDistance)) return false;
   }
@@ -85,6 +100,21 @@ export function chebyshev(r1: number, c1: number, r2: number, c2: number): numbe
   return Math.max(Math.abs(r1 - r2), Math.abs(c1 - c2));
 }
 
+/** True if the cell at (r,c) is adjacent to a tile of the given type, per the given metric. */
+export function isAdjacentToTile(
+  grid: Grid,
+  r: number,
+  c: number,
+  tile: TileType,
+  metric: 'chebyshev' | 'manhattan',
+): boolean {
+  const dirs = metric === 'chebyshev' ? 8 : 4;
+  for (const { r: nr, c: nc } of getNeighbors(grid, r, c, dirs)) {
+    if (grid[nr][nc]?.tile === tile) return true;
+  }
+  return false;
+}
+
 /** True if the cell at (r,c) is adjacent to a pizza box, per the given metric. */
 export function isAdjacentToPizza(
   grid: Grid,
@@ -92,11 +122,7 @@ export function isAdjacentToPizza(
   c: number,
   metric: 'chebyshev' | 'manhattan',
 ): boolean {
-  const dirs = metric === 'chebyshev' ? 8 : 4;
-  for (const { r: nr, c: nc } of getNeighbors(grid, r, c, dirs)) {
-    if (grid[nr][nc]?.tile === 'pizza') return true;
-  }
-  return false;
+  return isAdjacentToTile(grid, r, c, 'pizza', metric);
 }
 
 /** True if placing a teleporter at (r,c) is at least minDistance (Chebyshev)
@@ -112,6 +138,29 @@ export function respectsMinDistance(
     for (let nc = 0; nc < size; nc++) {
       if (nr === r && nc === c) continue;
       if (grid[nr][nc]?.tile === 'teleporter') {
+        if (chebyshev(r, c, nr, nc) < minDistance) return false;
+      }
+    }
+  }
+  return true;
+}
+
+/** True if the cell at (r,c) is at least minDistance (Chebyshev) from every
+ *  pizza box of the given `variant` on the grid. Used by mailbox placement
+ *  to enforce a same-variant separation distance. */
+export function respectsMailboxPizzaDistance(
+  grid: Grid,
+  r: number,
+  c: number,
+  variant: string,
+  minDistance: number,
+): boolean {
+  const size = grid.length;
+  for (let nr = 0; nr < size; nr++) {
+    for (let nc = 0; nc < size; nc++) {
+      if (nr === r && nc === c) continue;
+      const cell = grid[nr][nc];
+      if (cell?.tile === 'pizza' && cell.variant === variant) {
         if (chebyshev(r, c, nr, nc) < minDistance) return false;
       }
     }
@@ -188,6 +237,8 @@ export const GLOBAL_RULES: GlobalRules = {
   portalSettings: {
     noPizzaAdjacent: true,
     pizzaAdjacencyMetric: 'chebyshev',
+    noMailboxAdjacent: true,
     minDistance: 3,
+    mailboxMinDistance: true,
   },
 };

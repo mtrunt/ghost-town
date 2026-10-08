@@ -24,8 +24,13 @@ export interface PortalSettings {
   noPizzaAdjacent: boolean;
   /** Adjacency metric for noPizzaAdjacent. 'chebyshev' = 8-dir, 'manhattan' = 4-dir. */
   pizzaAdjacencyMetric: 'chebyshev' | 'manhattan';
+  /** When true, teleporters may not be placed adjacent to mailboxes (houses). */
+  noMailboxAdjacent: boolean;
   /** When non-null, teleporters must be at least this many cells apart (Chebyshev). */
   minDistance: number | null;
+  /** When true, mailboxes must be at least `minDistance` (Chebyshev) from pizza
+   *  of the same variant. Only applies when `minDistance` is non-null. */
+  mailboxMinDistance: boolean;
 }
 
 export interface TileRule {

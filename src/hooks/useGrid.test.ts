@@ -14,7 +14,7 @@ describe('useGrid with portal settings', () => {
   });
 
   it('does not flag adjacent teleporter+pizza when noPizzaAdjacent off', () => {
-    const settings = { noPizzaAdjacent: false, pizzaAdjacencyMetric: 'chebyshev' as const, minDistance: null };
+    const settings = { noPizzaAdjacent: false, pizzaAdjacencyMetric: 'chebyshev' as const, noMailboxAdjacent: false, minDistance: null };
     const { result } = renderHook(() => useGrid(settings));
     act(() => {
       result.current.place(3, 3, { type: 'pizza', variant: 'pepper' });
@@ -24,7 +24,7 @@ describe('useGrid with portal settings', () => {
   });
 
   it('re-validates when portalSettings change (rerender with new settings)', () => {
-    const relaxed = { noPizzaAdjacent: false, pizzaAdjacencyMetric: 'chebyshev' as const, minDistance: null };
+    const relaxed = { noPizzaAdjacent: false, pizzaAdjacencyMetric: 'chebyshev' as const, noMailboxAdjacent: false, minDistance: null };
     const strict = { ...relaxed, noPizzaAdjacent: true };
     const { result, rerender } = renderHook(({ settings }) => useGrid(settings), {
       initialProps: { settings: relaxed },
@@ -39,7 +39,7 @@ describe('useGrid with portal settings', () => {
   });
 
   it('generate passes settings to engine (respects minDistance)', () => {
-    const settings = { noPizzaAdjacent: false, pizzaAdjacencyMetric: 'chebyshev' as const, minDistance: 3 };
+    const settings = { noPizzaAdjacent: false, pizzaAdjacencyMetric: 'chebyshev' as const, noMailboxAdjacent: false, minDistance: 3 };
     const { result } = renderHook(() => useGrid(settings));
     act(() => result.current.generate(2));
     // All teleporter pairs must be >= 3 apart (chebyshev).

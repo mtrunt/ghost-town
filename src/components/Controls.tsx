@@ -79,6 +79,21 @@ export function Controls({
       <label>
         <input
           type="checkbox"
+          aria-label="portals not adjacent to houses"
+          checked={portalSettings.noMailboxAdjacent}
+          onChange={(e) =>
+            onPortalSettingsChange({
+              ...portalSettings,
+              noMailboxAdjacent: e.target.checked,
+            })
+          }
+        />
+        Portals not adjacent to houses
+      </label>
+
+      <label>
+        <input
+          type="checkbox"
           aria-label="min portal distance"
           checked={portalSettings.minDistance != null}
           onChange={(e) =>
@@ -109,6 +124,21 @@ export function Controls({
           </select>
         </label>
       )}
+
+      <label>
+        <input
+          type="checkbox"
+          aria-label="mailbox min distance from matching pizza"
+          checked={portalSettings.mailboxMinDistance}
+          onChange={(e) =>
+            onPortalSettingsChange({
+              ...portalSettings,
+              mailboxMinDistance: e.target.checked,
+            })
+          }
+        />
+        Mailboxes at least min distance from matching pizza
+      </label>
     </div>
   );
 }

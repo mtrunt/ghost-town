@@ -7,6 +7,7 @@ import type { PortalSettings } from '../types';
 const RELAXED_SETTINGS: PortalSettings = {
   noPizzaAdjacent: false,
   pizzaAdjacencyMetric: 'chebyshev',
+  noMailboxAdjacent: false,
   minDistance: null,
 };
 
@@ -99,7 +100,7 @@ describe('validator with portal settings', () => {
     const g = createEmptyGrid(7);
     g[3][3] = { tile: 'pizza', variant: 'pepper' };
     g[2][2] = { tile: 'teleporter', variant: 'square' };
-    const settings = { noPizzaAdjacent: false, pizzaAdjacencyMetric: 'chebyshev' as const, minDistance: null };
+    const settings = { noPizzaAdjacent: false, pizzaAdjacencyMetric: 'chebyshev' as const, noMailboxAdjacent: false, minDistance: null };
     expect(validate(g, settings)).toEqual([]);
   });
 
@@ -107,7 +108,7 @@ describe('validator with portal settings', () => {
     const g = createEmptyGrid(7);
     g[3][3] = { tile: 'teleporter', variant: 'square' };
     g[3][4] = { tile: 'teleporter', variant: 'triangle' };
-    const settings = { noPizzaAdjacent: false, pizzaAdjacencyMetric: 'chebyshev' as const, minDistance: 2 };
+    const settings = { noPizzaAdjacent: false, pizzaAdjacencyMetric: 'chebyshev' as const, noMailboxAdjacent: false, minDistance: 2 };
     const v = validate(g, settings);
     expect(v.some((x) => x.row === 3 && x.col === 3)).toBe(true);
     expect(v.some((x) => x.row === 3 && x.col === 4)).toBe(true);
@@ -117,7 +118,63 @@ describe('validator with portal settings', () => {
     const g = createEmptyGrid(7);
     g[0][0] = { tile: 'pizza', variant: 'pepper' };
     g[6][6] = { tile: 'teleporter', variant: 'square' };
-    const settings = { noPizzaAdjacent: true, pizzaAdjacencyMetric: 'chebyshev' as const, minDistance: 2 };
+    const settings = { noPizzaAdjacent: true, pizzaAdjacencyMetric: 'chebyshev' as const, noMailboxAdjacent: false, minDistance: 2 };
+    expect(validate(g, settings)).toEqual([]);
+  });
+});
+
+describe('validator with noMailboxAdjacent', () => {
+  it('teleporter adjacent to mailbox violates when noMailboxAdjacent on', () => {
+    const g = createEmptyGrid(7);
+    g[3][3] = { tile: 'mailbox', variant: 'pepper' };
+    g[2][2] = { tile: 'teleporter', variant: 'square' };
+    const settings = { noPizzaAdjacent: false, pizzaAdjacencyMetric: 'chebyshev' as const, noMailboxAdjacent: true, minDistance: null };
+    const v = validate(g, settings);
+    expect(v.some((x) => x.row === 2 && x.col === 2)).toBe(true);
+  });
+
+  it('teleporter adjacent to mailbox does NOT violate when noMailboxAdjacent off', () => {
+    const g = createEmptyGrid(7);
+    g[3][3] = { tile: 'mailbox', variant: 'pepper' };
+    g[2][2] = { tile: 'teleporter', variant: 'square' };
+    const settings = { noPizzaAdjacent: false, pizzaAdjacencyMetric: 'chebyshev' as const, noMailboxAdjacent: false, minDistance: null };
+    expect(validate(g, settings)).toEqual([]);
+  });
+});
+
+describe('validator with mailboxMinDistance', () => {
+  it('mailbox within minDistance of same-variant pizza violates when on', () => {
+    const g = createEmptyGrid(7);
+    g[3][3] = { tile: 'pizza', variant: 'pepper' };
+    // chebyshev 2 from pizza, not 8-dir adjacent
+    g[1][3] = { tile: 'mailbox', variant: 'pepper' };
+    const settings = { noPizzaAdjacent: false, pizzaAdjacencyMetric: 'chebyshev' as const, noMailboxAdjacent: false, minDistance: 3, mailboxMinDistance: true };
+    const v = validate(g, settings);
+    expect(v.some((x) => x.row === 1 && x.col === 3)).toBe(true);
+  });
+
+  it('mailbox at exactly minDistance from same-variant pizza is ok', () => {
+    const g = createEmptyGrid(7);
+    g[3][3] = { tile: 'pizza', variant: 'pepper' };
+    // chebyshev 3 from pizza
+    g[0][3] = { tile: 'mailbox', variant: 'pepper' };
+    const settings = { noPizzaAdjacent: false, pizzaAdjacencyMetric: 'chebyshev' as const, noMailboxAdjacent: false, minDistance: 3, mailboxMinDistance: true };
+    expect(validate(g, settings)).toEqual([]);
+  });
+
+  it('mailbox within minDistance of different-variant pizza is ok', () => {
+    const g = createEmptyGrid(7);
+    g[3][3] = { tile: 'pizza', variant: 'cheese' };
+    g[3][4] = { tile: 'mailbox', variant: 'pepper' };
+    const settings = { noPizzaAdjacent: false, pizzaAdjacencyMetric: 'chebyshev' as const, noMailboxAdjacent: false, minDistance: 3, mailboxMinDistance: true };
+    expect(validate(g, settings)).toEqual([]);
+  });
+
+  it('mailbox within minDistance is ok when mailboxMinDistance off', () => {
+    const g = createEmptyGrid(7);
+    g[3][3] = { tile: 'pizza', variant: 'pepper' };
+    g[1][3] = { tile: 'mailbox', variant: 'pepper' };
+    const settings = { noPizzaAdjacent: false, pizzaAdjacencyMetric: 'chebyshev' as const, noMailboxAdjacent: false, minDistance: 3, mailboxMinDistance: false };
     expect(validate(g, settings)).toEqual([]);
   });
 });
