@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { ActiveTile } from './types';
 import { useGrid } from './hooks/useGrid';
 import { Board } from './components/Board';
@@ -14,15 +14,31 @@ export default function App() {
   const [portalSettings, setPortalSettings] = useState(GLOBAL_RULES.portalSettings);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [loadCode, setLoadCode] = useState('');
+  const [copied, setCopied] = useState(false);
   const onLoadSettings = useCallback(({ players, portalSettings }: { players: number; portalSettings: typeof GLOBAL_RULES.portalSettings }) => {
     setPlayers(players);
     setPortalSettings(portalSettings);
   }, []);
   const { grid, violations, error, shareCode, place, remove, clear, resize, generate, load } = useGrid(portalSettings, onLoadSettings);
 
+  useEffect(() => {
+    setLoadCode(shareCode ?? '');
+    setCopied(false);
+  }, [shareCode]);
+
   const handleLoad = () => {
     load(loadCode.trim());
-    setLoadCode('');
+  };
+
+  const handleCopy = async () => {
+    if (!loadCode) return;
+    try {
+      await navigator.clipboard.writeText(loadCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // clipboard unavailable
+    }
   };
 
   const handlePlace = (r: number, c: number) => {
@@ -56,23 +72,20 @@ export default function App() {
             maxLength={6}
             value={loadCode}
             onChange={(e) => setLoadCode(e.target.value)}
+            aria-label="board code"
             className="load-input"
           />
           <button type="button" className="action-btn secondary" onClick={handleLoad}>Load</button>
+          <button
+            type="button"
+            className="action-btn secondary"
+            onClick={handleCopy}
+            disabled={!loadCode}
+            aria-label="copy board code"
+          >
+            {copied ? 'Copied' : 'Copy'}
+          </button>
         </div>
-        {shareCode && (
-          <div className="share-code-row">
-            <label htmlFor="share-code">Board code:</label>
-            <input
-              id="share-code"
-              aria-label="board code"
-              className="share-code-display"
-              type="text"
-              value={shareCode}
-              readOnly
-            />
-          </div>
-        )}
         {settingsOpen && (
           <Controls
             players={players}

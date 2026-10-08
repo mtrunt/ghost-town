@@ -103,8 +103,9 @@ export function decodeShareCode(code: string): ShareParams;
 
 ## UI Changes (`src/App.tsx`)
 
-- After generation, display the share code prominently (read-only text or input with copy-on-click) below the header or near the board.
-- Add a text input + "Load" button in the header actions area.
+- A single text input serves as both the code display and load input. After generation, the code is placed into this input (read-write, so the user can edit or replace it). After loading, the normalized code is placed into the same input.
+- A "Load" button next to the input triggers `useGrid.load(code)`.
+- A "Copy" button next to the Load button copies the current input value to the clipboard.
 - On load:
   1. Call `useGrid.load(code)`.
   2. The hook calls back with decoded settings; App updates `players`, `portalSettings`, and size state.
@@ -113,8 +114,7 @@ export function decodeShareCode(code: string): ShareParams;
 ### Layout sketch
 
 ```
-[Generate] [Clear] [⚙]              [______] [Load]    <- header row
-Code: aB3x9Q                                              <- share code display
+[Generate] [Clear] [⚙]     [______] [Load] [Copy]    <- header row
 ```
 
 ## Error Handling
