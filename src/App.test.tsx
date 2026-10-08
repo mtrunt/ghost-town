@@ -49,4 +49,53 @@ describe('App', () => {
     const checkbox = screen.getByLabelText(/portals not adjacent to pizza/i) as HTMLInputElement;
     expect(checkbox.checked).toBe(true);
   });
+
+  it('displays share code after generating', () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: /generate/i }));
+    const codeDisplay = screen.getByLabelText(/board code/i) as HTMLInputElement;
+    expect(codeDisplay).toBeInTheDocument();
+    const code = codeDisplay.value || codeDisplay.textContent!;
+    expect(code).toMatch(/^[0-9a-zA-Z]{6}$/);
+  });
+
+  it('does not display share code before generating', () => {
+    render(<App />);
+    expect(screen.queryByLabelText(/board code/i)).not.toBeInTheDocument();
+  });
+
+  it('renders load input and load button', () => {
+    render(<App />);
+    expect(screen.getByPlaceholderText(/code/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /load/i })).toBeInTheDocument();
+  });
+
+  it('loading a valid code reconstructs the board', () => {
+    render(<App />);
+    // Generate to get a code
+    fireEvent.click(screen.getByRole('button', { name: /generate/i }));
+    const codeDisplay = screen.getByLabelText(/board code/i) as HTMLInputElement;
+    const code = codeDisplay.value || codeDisplay.textContent!;
+    // Clear the board
+    fireEvent.click(screen.getByRole('button', { name: /clear/i }));
+    expect(screen.queryByLabelText(/board code/i)).not.toBeInTheDocument();
+    // Load the code
+    const loadInput = screen.getByPlaceholderText(/code/i);
+    fireEvent.change(loadInput, { target: { value: code } });
+    fireEvent.click(screen.getByRole('button', { name: /load/i }));
+    // Board should be filled again
+    const cells = screen.getAllByRole('gridcell');
+    const filled = cells.filter((c) => c.textContent && c.textContent.trim() !== '');
+    expect(filled.length).toBeGreaterThan(0);
+    // Share code should be displayed again
+    expect(screen.getByLabelText(/board code/i)).toBeInTheDocument();
+  });
+
+  it('loading an invalid code shows an error', () => {
+    render(<App />);
+    const loadInput = screen.getByPlaceholderText(/code/i);
+    fireEvent.change(loadInput, { target: { value: '!!!' } });
+    fireEvent.click(screen.getByRole('button', { name: /load/i }));
+    expect(screen.getByText(/invalid board code/i)).toBeInTheDocument();
+  });
 });

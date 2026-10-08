@@ -88,6 +88,52 @@ body {
 }
 .controls-toggle:active { background: #1e3a8a; }
 
+/* Load row + share code display */
+.load-row {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0 0.75rem 0.5rem;
+  align-items: center;
+}
+.load-input {
+  flex: 0 0 auto;
+  width: 6rem;
+  padding: 0.5rem;
+  background: #0f172a;
+  color: #f1f5f9;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-family: ui-monospace, monospace;
+  letter-spacing: 0.05em;
+  min-height: 2.25rem;
+}
+.share-code-row {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0 0.75rem 0.5rem;
+  align-items: center;
+}
+.share-code-row label {
+  font-size: 0.75rem;
+  color: #cbd5e1;
+  white-space: nowrap;
+}
+.share-code-display {
+  flex: 0 0 auto;
+  width: 6rem;
+  padding: 0.4rem 0.5rem;
+  background: #0f172a;
+  color: #38bdf8;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  font-size: 0.9375rem;
+  font-family: ui-monospace, monospace;
+  letter-spacing: 0.08em;
+  text-align: center;
+  min-height: 2.25rem;
+}
+
 /* Main layout: mobile-first single column */
 .app-main {
   display: flex;
@@ -299,6 +345,14 @@ body {
   .violations { min-height: 200px; }
   .app-header-row { padding: 0.75rem 1rem; }
   .controls-toggle { display: none; }
+  .load-row {
+    display: inline-flex;
+    padding: 0;
+  }
+  .share-code-row {
+    display: inline-flex;
+    padding: 0;
+  }
   /* On tablet, show controls inline in header (always visible) */
   .app-header .controls { display: flex; padding: 0 1rem 0.75rem; }
 }

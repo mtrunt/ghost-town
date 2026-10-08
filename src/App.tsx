@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import type { ActiveTile } from './types';
 import { useGrid } from './hooks/useGrid';
 import { Board } from './components/Board';
@@ -13,7 +13,17 @@ export default function App() {
   const [active, setActive] = useState<ActiveTile | null>(null);
   const [portalSettings, setPortalSettings] = useState(GLOBAL_RULES.portalSettings);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const { grid, violations, error, place, remove, clear, resize, generate } = useGrid(portalSettings);
+  const [loadCode, setLoadCode] = useState('');
+  const onLoadSettings = useCallback(({ players, portalSettings }: { players: number; portalSettings: typeof GLOBAL_RULES.portalSettings }) => {
+    setPlayers(players);
+    setPortalSettings(portalSettings);
+  }, []);
+  const { grid, violations, error, shareCode, place, remove, clear, resize, generate, load } = useGrid(portalSettings, onLoadSettings);
+
+  const handleLoad = () => {
+    load(loadCode.trim());
+    setLoadCode('');
+  };
 
   const handlePlace = (r: number, c: number) => {
     if (active) place(r, c, active);
@@ -39,6 +49,30 @@ export default function App() {
             </button>
           </div>
         </div>
+        <div className="load-row">
+          <input
+            type="text"
+            placeholder="code"
+            maxLength={6}
+            value={loadCode}
+            onChange={(e) => setLoadCode(e.target.value)}
+            className="load-input"
+          />
+          <button type="button" className="action-btn secondary" onClick={handleLoad}>Load</button>
+        </div>
+        {shareCode && (
+          <div className="share-code-row">
+            <label htmlFor="share-code">Board code:</label>
+            <input
+              id="share-code"
+              aria-label="board code"
+              className="share-code-display"
+              type="text"
+              value={shareCode}
+              readOnly
+            />
+          </div>
+        )}
         {settingsOpen && (
           <Controls
             players={players}
