@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useGrid } from './useGrid';
 import { GLOBAL_RULES } from '../config/rules';
+import { encodeShareCode, decodeShareCode } from '../engine/share-code';
 
 describe('useGrid with portal settings', () => {
   it('accepts portalSettings and flags adjacent teleporter+pizza when on', () => {
@@ -118,5 +119,78 @@ describe('useGrid', () => {
       result.current.generate(4);
     });
     expect(result.current.error).toMatch(/no valid setup/i);
+  });
+});
+
+describe('useGrid share code', () => {
+  it('generate sets shareCode', () => {
+    const { result } = renderHook(() => useGrid());
+    act(() => result.current.generate(2));
+    expect(result.current.shareCode).not.toBeNull();
+    expect(result.current.shareCode).toHaveLength(6);
+  });
+
+  it('place clears shareCode', () => {
+    const { result } = renderHook(() => useGrid());
+    act(() => result.current.generate(2));
+    expect(result.current.shareCode).not.toBeNull();
+    act(() => result.current.place(0, 0, { type: 'grave' }));
+    expect(result.current.shareCode).toBeNull();
+  });
+
+  it('remove clears shareCode', () => {
+    const { result } = renderHook(() => useGrid());
+    act(() => result.current.generate(2));
+    expect(result.current.shareCode).not.toBeNull();
+    act(() => result.current.remove(0, 0));
+    expect(result.current.shareCode).toBeNull();
+  });
+
+  it('clear clears shareCode', () => {
+    const { result } = renderHook(() => useGrid());
+    act(() => result.current.generate(2));
+    expect(result.current.shareCode).not.toBeNull();
+    act(() => result.current.clear());
+    expect(result.current.shareCode).toBeNull();
+  });
+
+  it('resize clears shareCode', () => {
+    const { result } = renderHook(() => useGrid());
+    act(() => result.current.generate(2));
+    expect(result.current.shareCode).not.toBeNull();
+    act(() => result.current.resize(9));
+    expect(result.current.shareCode).toBeNull();
+  });
+
+  it('load with valid code updates grid and calls onLoadSettings', () => {
+    const onLoadSettings = vi.fn();
+    const { result } = renderHook(() => useGrid(GLOBAL_RULES.portalSettings, onLoadSettings));
+    // First generate to get a valid code
+    act(() => result.current.generate(2));
+    const code = result.current.shareCode!;
+    // Clear and load
+    act(() => result.current.clear());
+    expect(result.current.shareCode).toBeNull();
+    act(() => result.current.load(code));
+    expect(result.current.shareCode).toBe(code);
+    expect(result.current.grid.flat().filter(Boolean).length).toBeGreaterThan(0);
+    expect(onLoadSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ players: 2 }),
+    );
+  });
+
+  it('load with invalid code sets error and does not change grid', () => {
+    const { result } = renderHook(() => useGrid());
+    const gridBefore = result.current.grid;
+    act(() => result.current.load('!!!'));
+    expect(result.current.error).toMatch(/invalid board code/i);
+    expect(result.current.grid).toBe(gridBefore);
+    expect(result.current.shareCode).toBeNull();
+  });
+
+  it('load with wrong-length code sets error', () => {
+    const { result } = renderHook(() => useGrid());
+    act(() => result.current.load('abc'));
+    expect(result.current.error).toMatch(/invalid board code/i);
   });
 });
